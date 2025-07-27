@@ -3,7 +3,8 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import debounce from 'lodash.debounce'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,9 +15,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { useAuth } from '@/context/auth-context'
+import authApi from '@/lib/authApi'         // axios instance pointed at process.env
 import { toast } from 'react-hot-toast'
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const usernameRegex = /^[a-zA-Z0-9_]+$/
+
 
 export default function SignupPage() {
   const { signup } = useAuth()
@@ -33,7 +37,45 @@ export default function SignupPage() {
     password: '' as string,
   })
   const [loading, setLoading] = useState(false)
+    const [checkingUsername, setCheckingUsername] = useState(false)
 
+    //Debounced availability check
+  const checkUsername = useCallback(
+    debounce(async (value: string) => {
+      if (!usernameRegex.test(value)) {
+        setErrors((e) => ({ ...e, username: 'Invalid characters in username' }))
+        setCheckingUsername(false)
+        return
+      }
+      try {
+        const { data } = await authApi.get('/auth/check-username', {
+          params: { username: value },
+        })
+        setErrors((e) => ({
+          ...e,
+          username: data.available ? '' : 'Username already taken',
+        }))
+      } catch {
+        setErrors((e) => ({ ...e, username: 'Error checking username' }))
+      } finally {
+        setCheckingUsername(false)
+      }
+    }, 500),
+    []
+  )
+
+  // Trigger availability check when username changes
+  useEffect(() => {
+    if (!username.trim()) {
+      setErrors((e) => ({ ...e, username: 'Username is required' }))
+      return
+    }
+    setCheckingUsername(true)
+    setErrors((e) => ({ ...e, username: '' }))
+    checkUsername(username.trim().toLowerCase())
+  }, [username, checkUsername])
+
+  
   const validate = () => {
     const errs = { username: '', name: '', email: '', password: '' }
     const usernameRegex = /^[a-zA-Z0-9_]+$/ 
@@ -52,6 +94,7 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     if (!validate()) return
+        if (errors.username) return  // block if username check failed
     setLoading(true)
     try {
       await signup(username, name, email, password)
@@ -92,19 +135,16 @@ export default function SignupPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Username Field */}
+             {/* Username Field */}
             <div>
               <Input
-                placeholder="Username"                                      
-                value={username}                                       
-                onChange={(e) => setUsername(e.target.value)} 
-                onBlur={() =>
-                  setErrors((e) => ({
-                    ...e,
-                    username: username.trim() ? '' : 'Username is required', 
-                  }))
-                }
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                // disabled={checkingUsername}
               />
-              {errors.username && (                                     
+              {checkingUsername && <p className="text-sm text-muted-foreground">Checking...</p>}
+              {errors.username && (
                 <p className="mt-1 text-sm text-destructive">{errors.username}</p>
               )}
             </div>
@@ -167,7 +207,7 @@ export default function SignupPage() {
 
             <Button
               onClick={handleSignup}
-              disabled={loading}
+              disabled={loading || !!errors.username}
               className="w-full"
             >
               {loading ? 'Creating...' : 'Sign Up'}
