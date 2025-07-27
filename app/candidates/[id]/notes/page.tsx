@@ -14,6 +14,12 @@ import toast from 'react-hot-toast'
 import CandidateDocuments from '@/components/CandidateDocuments'
 import { Candidate } from '@/types/candidate'
 import { ArrowLeft } from 'lucide-react'
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/ui/tabs'
 
 type Note = {
   id: string
@@ -143,55 +149,96 @@ export default function CandidateNotesPage() {
       </h1>
     </header>
 
-    {/* Main Content */}
-<div 
-        className="flex flex-col md:flex-row flex-1 overflow-hidden" 
->
-  {/* Chat Section */}
-  <section className="flex-1 flex flex-col border-r">
-    {/* Notes Scrollable Area */}
-    <div className="flex-1 px-4 pt-4 mx-16 overflow-y-auto space-y-4">
-      {notes.length === 0 ? (
-        <div className="text-muted-foreground text-center mt-10 text-sm">No notes yet.</div>
-      ) : (
-        notes.map((note) => (
-          <div key={note.id} id={note.id} className="bg-background p-4 rounded shadow-sm border">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-muted-foreground">{note.sender.username}</span>
-              <span className="text-xs text-gray-400">
-                {formatDistanceToNow(convertUtcToLocal(note.createdAt), {
-                  addSuffix: true,
-                })}
-              </span>
+      {/* Main: Desktop: side-by-side; Mobile: tabs */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop Layout */}
+        <div className="hidden md:flex flex-1 overflow-hidden">
+          {/* Notes */}
+          <section className="flex-1 flex flex-col border-r">
+            <div className="flex-1 px-4 md:mx-16 mx-4 pt-4 overflow-y-auto space-y-4"> {/* <== edited: responsive mx */}
+              {notes.length === 0 ? (
+                <div className="text-muted-foreground text-center mt-10 text-sm">
+                  No notes yet.
+                </div>
+              ) : (
+                notes.map(note => (
+                  <div key={note.id} id={note.id} className="bg-background p-4 rounded shadow-sm border">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {note.sender.username}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm"
+                      dangerouslySetInnerHTML={{
+                        __html: note.content, // assume highlightMentions applied server-side or earlier
+                      }}
+                    />
+                  </div>
+                ))
+              )}
+              <div ref={scrollRef} />
             </div>
-            <p
-              className="text-sm"
-              dangerouslySetInnerHTML={{
-                __html: highlightMentions(note.content, allUsers.map(u => ({ id: u.id, username: u.username }))),
-              }}
-            />
-          </div>
-        ))
-      )}
-      <div ref={scrollRef} />
+
+            <div className="border-t px-4 md:mx-16 mx-4 py-3 bg-background flex items-center gap-2">
+              <MentionInput value={message} onChange={setMessage} />
+              <Button onClick={handleSend}>Send</Button>
+            </div>
+          </section>
+
+          {/* Sidebar */}
+          <aside className="w-1/3 bg-muted border-l p-4 overflow-y-auto">
+            <h2 className="text-md font-medium mb-2">📁 Shared Documents</h2>
+            <CandidateDocuments candidateId={candidateId as string} />
+          </aside>
+        </div>
+
+        {/* Mobile Layout: Tabs */}
+        <div className="flex flex-col md:hidden flex-1 overflow-hidden"> {/* <== edited: mobile-only */}
+          <Tabs defaultValue="notes" className="h-full flex flex-col mt-2  ">
+            <TabsList className='mx-auto'>
+              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="docs">Documents</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="notes" className="flex-1 flex flex-col overflow-hidden">
+              <div className="flex-1 px-4 mx-4 pt-4 overflow-y-auto space-y-4">
+                {notes.length === 0 ? (
+                  <div className="text-muted-foreground text-center mt-10 text-sm">
+                    No notes yet.
+                  </div>
+                ) : (
+                  notes.map(note => (
+                    <div key={note.id} id={note.id} className="bg-background p-4 rounded shadow-sm border">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {note.sender.username}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="text-sm">{note.content}</p>
+                    </div>
+                  ))
+                )}
+                <div ref={scrollRef} />
+              </div>
+              <div className="border-t px-4 mx-4 py-3 bg-background flex items-center gap-2">
+                <MentionInput value={message} onChange={setMessage} />
+                <Button onClick={handleSend}>Send</Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="docs" className="p-4 overflow-y-auto flex-1">
+              <CandidateDocuments candidateId={candidateId as string} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
-
-    {/* Input Box at Bottom */}
-    <div className="border-t px-4 py-3 mx-16 bg-background flex items-center gap-2">
-      <MentionInput value={message} onChange={setMessage} />
-      <Button onClick={handleSend}>Send</Button>
-    </div>
-  </section>
-
-  {/* Sidebar: Documents */}
-        <aside className="w-full md:w-1/3 bg-muted border-t md:border-t-0 md:border-l p-4 overflow-y-auto"> {/* <== responsive sidebar */}
-    <h2 className="text-md font-medium mb-2">📁 Shared Documents</h2>
-    <CandidateDocuments candidateId={candidateId as string} />
-  </aside>
-</div>
-
-
-
-  </div>
-)
+  )
 }
