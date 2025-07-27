@@ -173,9 +173,9 @@ export default function CandidateNotesPage() {
                     </div>
                     <p
                       className="text-sm"
-                      dangerouslySetInnerHTML={{
-                        __html: note.content, // assume highlightMentions applied server-side or earlier
-                      }}
+                       dangerouslySetInnerHTML={{
+                __html: highlightMentions(note.content, allUsers.map(u => ({ id: u.id, username: u.username }))),
+              }}
                     />
                   </div>
                 ))
@@ -221,7 +221,15 @@ export default function CandidateNotesPage() {
                           {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
                         </span>
                       </div>
-                      <p className="text-sm">{note.content}</p>
+                    <p
+                        className="text-sm"
+                        dangerouslySetInnerHTML={{
+                          __html: highlightMentions(
+                            note.content,
+                            allUsers.map(u => ({ id: u.id, username: u.username }))
+                          ),                         // <== edited: highlightMentions here too
+                        }}
+                      />
                     </div>
                   ))
                 )}
