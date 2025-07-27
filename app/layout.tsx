@@ -1,5 +1,5 @@
 import NotificationListener from '@/components/NotificationListener'
-import '../../frontend/app/globals.css'
+import './globals.css'
 import { AuthProvider } from '@/context/auth-context'
 import { Toaster } from 'react-hot-toast'
 
