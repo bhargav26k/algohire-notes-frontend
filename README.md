@@ -8,6 +8,9 @@
 
 A Next.js (TypeScript) client for collaborative candidate notes with JWT auth, ShadCN UI, real-time chat, `@username` tagging, toast/notifications, and document uploads.
 
+## 🔗 Live Deployment (Frontend):
+https://algohire-notes-frontend.vercel.app/login
+
 ## 🔑 Features
 
 - **Authentication**: Login/Signup with JWT  
