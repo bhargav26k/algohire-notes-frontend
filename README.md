@@ -1,9 +1,3 @@
-
----
-
-## 📄 Frontend: `README.md`
-
-```markdown
 # Real-Time Notes Frontend
 
 A Next.js (TypeScript) client for collaborative candidate notes with JWT auth, ShadCN UI, real-time chat, `@username` tagging, toast/notifications, and document uploads.
