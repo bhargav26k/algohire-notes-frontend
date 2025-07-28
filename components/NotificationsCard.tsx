@@ -46,9 +46,14 @@ async function fetchNotifications() {
 
       try {
         const { data } = await axios.get<Notification[]>('/notifications')
-        console.log('Fetched notifications:', data)
-        setNotifications(data)
-        const unread = data.filter((n) => !n.isRead).length
+        const seen = new Set()
+        const unique = data.filter((n) => {
+          if (seen.has(n.noteId)) return false
+          seen.add(n.noteId)
+          return true
+        }) 
+        setNotifications(unique)
+        const unread = unique.filter((n) => !n.isRead).length
         onUnreadCount?.(unread)
       } catch (error) {
         console.error('Error fetching notifications:', error)
@@ -65,14 +70,21 @@ const handleRedirect = async (
     noteId: string,
     isRead?: boolean
   ) => {
+      let updatedNotifications = notifications
+
     if (!isRead) {
       try {
         await axios.patch(`/notifications/${noteId}/read`)
-        const updated = notifications.map((n) =>
+        const updatedNotifications  = notifications.map((n) =>
           n.noteId === noteId ? { ...n, isRead: true } : n
         )
-        setNotifications(updated)
-        onUnreadCount?.(updated.filter((n) => !n.isRead).length)
+
+        const deduped = Array.from(
+          new Map(updatedNotifications .map((n) => [n.noteId, n])).values()
+        ) 
+
+        setNotifications(deduped)
+        onUnreadCount?.(deduped.filter((n) => !n.isRead).length)
       } catch (error) {
         console.error('Error marking as read:', error)
       }

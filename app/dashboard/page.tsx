@@ -8,6 +8,9 @@ import CandidateCard from '@/components/CandidateCard'
 import CandidateForm from '@/components/CandidateForm'
 import NotificationsCard from '@/components/NotificationsCard'
 import { Candidate } from '@/types/candidate'
+import { Dialog, DialogContent } from '@/components/ui/dialog' 
+import { useMediaQuery } from '@/lib/use-media-query' 
+
 
 import {
   BellIcon,
@@ -37,6 +40,7 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1)
   const pageSize = 6
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
+  const isMobile = useMediaQuery('(max-width: 768px)') 
 
 // Redirect if not authenticated
   useEffect(() => {
@@ -242,6 +246,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Notifications Panel */}
+        {!isMobile && (
         <div
           className={`
             absolute top-0 right-0 transform transition-transform duration-500 ease-in-out
@@ -262,6 +267,23 @@ export default function DashboardPage() {
           </div>
           <NotificationsCard onUnreadCount={(c) => setUnreadCount(c)} />
         </div>
+        )}
+
+                  {/* Mobile Modal Notifications */}
+          {isMobile && (
+            <Dialog open={showNotif} onOpenChange={setShowNotif}> {/* <== edited line */}
+              <DialogContent className="p-6 max-w-full sm:max-w-lg h-[90vh] overflow-y-auto"> {/* <== edited line */}
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold">Notifications</h3>
+                  {/* <Button variant="ghost" size="icon" onClick={() => setShowNotif(false)}>
+                    <X className="h-5 w-5" />
+                  </Button> */}
+                </div>
+                <NotificationsCard onUnreadCount={(c) => setUnreadCount(c)} />
+              </DialogContent>
+            </Dialog>
+          )}
+
         </div>
       </div>
       
